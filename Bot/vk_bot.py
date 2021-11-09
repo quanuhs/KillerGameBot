@@ -275,9 +275,8 @@ def lobby_start(user, game_id, event, session):
 
       return
 
-    # НЕ ЗАБЫТЬ ИСПРАВИТЬ!
-    # ТОЛЬКО ДЛЯ ДЕБАГА -> ДОЛЖНО БЫТЬ > 2!
-    if len(_game.players) >= 2:
+    # Если игроков > 2
+    if len(_game.players) >= 3:
 
       vk.messages.send(
         user_ids = ",".join(str(x.user_id) for x in _game.players if x.user_id != user.user_id),
@@ -334,18 +333,34 @@ def game_submit(user, game_id, event, session):
     _target:Target = session.query(Target).filter(Target.hunter_id == user.id, Target.game_id == game_id, Target.eliminated_by == None).one_or_none()
   
     if _target:
-      vk.messages.send(
-        user_id =  user.user_id,
-        message = "Ждём подтверждения у вашей цели.",
-        random_id = 0
-      )
 
-      vk.messages.send(
-        user_id =  _target.prey.hunter.user_id,
-        message = "Вы были устранены.\nЕсли это так - подтвердите нажав на кнопку.",
-        keyboard = vk_keys.game_confirm_death(game_id, user.id).get_keyboard(),
-        random_id = 0
-      )
+      if _target.prey.hunter.user_id == user.user_id:
+        vk.messages.send(
+          user_id = _game.host_id,
+          message = "Остался последний игрок.\nПора закончить игру!",
+          random_id = 0
+        )
+
+        vk.messages.send(
+          user_id = user.user_id,
+          message = "К счастью вы не можете устранить себя.\nВы остались последним игроком - создатель лобби был уведомлён.",
+          random_id = 0
+        )
+
+      else:
+      
+        vk.messages.send(
+          user_id =  user.user_id,
+          message = "Ждём подтверждения у вашей цели.",
+          random_id = 0
+        )
+
+        vk.messages.send(
+          user_id =  _target.prey.hunter.user_id,
+          message = "Вы были устранены.\nЕсли это так - подтвердите нажав на кнопку.",
+          keyboard = vk_keys.game_confirm_death(game_id, user.id).get_keyboard(),
+          random_id = 0
+        )
 
 
 def game_confirm_death(user, game_id, hunter_id, event, session):
