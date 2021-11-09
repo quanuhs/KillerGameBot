@@ -48,7 +48,7 @@ def vk_resolve_commands(event):
 
 
 def register_user(user_id, session) -> User:
-  user = User(user_id)
+  user:User = User(user_id)
 
   session.add(user)
   session.commit()
@@ -376,6 +376,8 @@ def game_confirm_death(user, game_id, hunter_id, event, session):
 def lobby_finish(user, game_id, event, session):
   _game:Game = session.query(Game).filter(Game.id==game_id, Game.host_id == user.id, Game.has_started==True).one_or_none()
 
+  if _game is None:
+    return
 
   users_headcount = session.query(User, Target).join(Target, (Target.eliminated_by == User.id)).filter(Target.game_id == _game.id).all()
 
